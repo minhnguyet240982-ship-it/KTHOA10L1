@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài Kiểm Tra Hóa Học 10</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    
+    <!-- MathJax Configuration cho Hóa học và Toán học -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']],
+                packages: {'[+]': ['mhchem']}
+            },
+            loader: {load: ['[tex]/mhchem']},
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady();
+                }
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        /* Tùy chỉnh thanh cuộn */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* Hiệu ứng Radio Button Custom */
+        .custom-radio input[type="radio"] { display: none; }
+        .custom-radio .radio-mark {
+            width: 20px; height: 20px; border: 2px solid #cbd5e1; border-radius: 50%;
+            display: inline-block; position: relative; margin-right: 10px; transition: all 0.2s;
+        }
+        .custom-radio input[type="radio"]:checked + .radio-mark { border-color: #4f46e5; }
+        .custom-radio input[type="radio"]:checked + .radio-mark::after {
+            content: ''; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); width: 10px; height: 10px;
+            background: #4f46e5; border-radius: 50%;
+        }
+        .option-label {
+            display: flex; align-items: center; padding: 12px 16px; margin-bottom: 8px;
+            border-radius: 8px; border: 1px solid #e2e8f0; cursor: pointer;
+            transition: all 0.2s; background: white;
+        }
+        .option-label:hover:not(.locked) { background: #f8fafc; border-color: #cbd5e1; }
+        .custom-radio input[type="radio"]:checked ~ .option-text { font-weight: 500; color: #4f46e5; }
+        .option-label.locked { cursor: not-allowed; opacity: 0.8; }
+        
+        /* Hiệu ứng cho T/F buttons */
+        .tf-btn {
+            padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer;
+            transition: all 0.2s; font-weight: 500; text-align: center; background: white;
+        }
+        .tf-btn.selected-true { background: #dcfce7; border-color: #22c55e; color: #166534; }
+        .tf-btn.selected-false { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+        .tf-btn.locked { cursor: not-allowed; opacity: 0.8; }
+        /* Pulse cho cảnh báo giờ */
+        @keyframes pulse-red {
+            0% { color: #ef4444; }
+            50% { color: #991b1b; }
+            100% { color: #ef4444; }
+        }
+        .time-warning { animation: pulse-red 2s infinite; font-weight: 700; }
+        .time-critical { animation: pulse-red 1s infinite; font-weight: 700; color: #ef4444; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased selection:bg-indigo-200 selection:text-indigo-900 pb-20">
+    <!-- Watermark Giáo viên -->
+    <div class="fixed bottom-2 left-2 text-white/70 text-xs font-medium z-50 pointer-events-none drop-shadow-md">
+        Thầy Lê Nguyễn Cường
+    </div>
+    <!-- Màn hình Đăng nhập -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-md p-8 rounded-2xl">
+            <div class="text-center mb-8">
+                <h1 class="text-2xl font-bold text-indigo-900 mb-2">BÀI KIỂM TRA HÓA HỌC 10</h1>
+                <p class="text-slate-600 font-medium">Thời gian: 45 phút</p>
+            </div>
+            
+            <form id="login-form" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1" for="studentName">Họ và tên học sinh</label>
+                    <input type="text" id="studentName" required autocomplete="off"
+                        class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white/80"
+                        placeholder="Nhập đầy đủ họ và tên">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1" for="studentClass">Lớp</label>
+                    <input type="text" id="studentClass" required autocomplete="off"
+                        class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white/80"
+                        placeholder="Ví dụ: 10A1">
+                </div>
+                
+                <div id="login-error" class="hidden text-red-600 text-sm font-medium text-center bg-red-50 p-2 rounded"></div>
+                <button type="submit" id="btn-start"
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg hover:shadow-xl flex justify-center items-center">
+                    <span>Bắt đầu làm bài</span>
+                    <svg id="start-spinner" class="animate-spin ml-2 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+    <!-- Màn hình Làm bài -->
+    <div id="test-screen" class="hidden max-w-4xl mx-auto pt-6 px-4">
+        
+        <!-- Sticky Header -->
+        <div class="sticky top-4 z-40 glass-panel rounded-xl p-4 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h2 class="text-lg font-bold text-indigo-900 line-clamp-1">HÓA HỌC 10 - <span id="display-name"></span> (<span id="display-class"></span>)</h2>
+                <div class="text-sm font-medium text-slate-600 mt-1">Đã làm: <span id="progress-count">0</span>/28 câu</div>
+            </div>
+            <div class="bg-indigo-50 border border-indigo-100 rounded-lg px-6 py-2 shadow-inner text-center">
+                <div class="text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-1">Thời gian còn lại</div>
+                <div id="timer-display" class="text-3xl font-mono font-bold text-indigo-900 tracking-tight">45:00</div>
+            </div>
+        </div>
+        <!-- Nội dung đề thi -->
+        <div id="questions-container" class="space-y-8">
+            <!-- Render bằng JS -->
+        </div>
+        <!-- Submit Section -->
+        <div class="mt-10 mb-20 flex justify-center">
+            <button id="btn-submit" 
+                class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-4 px-12 rounded-xl text-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 flex items-center">
+                <span>Nộp bài</span>
+                <svg id="submit-spinner" class="animate-spin ml-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+    <!-- Modal Kết quả -->
+    <div id="result-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="glass-panel w-full max-w-lg p-8 rounded-2xl relative">
+            <h3 class="text-2xl font-bold text-center text-indigo-900 mb-6 border-b pb-4">KẾT QUẢ BÀI LÀM</h3>
+            
+            <div class="space-y-3 text-slate-700 mb-6">
+                <div class="flex justify-between border-b border-slate-100 pb-2">
+                    <span class="font-medium">Học sinh:</span>
+                    <span id="res-name" class="font-bold"></span>
+                </div>
+                <div class="flex justify-between border-b border-slate-100 pb-2">
+                    <span class="font-medium">Lớp:</span>
+                    <span id="res-class" class="font-bold"></span>
+                </div>
+                <div class="flex justify-between border-b border-slate-100 pb-2">
+                    <span class="font-medium">Tổng điểm:</span>
+                    <span id="res-total-score" class="font-bold text-2xl text-pink-600"></span><span class="text-sm self-end pb-1 text-slate-500">/10.00</span>
+                </div>
+                <div class="grid grid-cols-3 gap-4 py-2">
+                    <div class="text-center bg-indigo-50 p-2 rounded">
+                        <div class="text-xs text-slate-500">PHẦN 1</div>
+                        <div id="res-p1-score" class="font-bold text-indigo-700"></div>
+                    </div>
+                    <div class="text-center bg-indigo-50 p-2 rounded">
+                        <div class="text-xs text-slate-500">PHẦN 2</div>
+                        <div id="res-p2-score" class="font-bold text-indigo-700"></div>
+                    </div>
+                    <div class="text-center bg-indigo-50 p-2 rounded">
+                        <div class="text-xs text-slate-500">PHẦN 3</div>
+                        <div id="res-p3-score" class="font-bold text-indigo-700"></div>
+                    </div>
+                </div>
+                <div class="flex justify-between text-sm mt-4">
+                    <span class="text-slate-500">Thời gian làm bài:</span>
+                    <span id="res-duration" class="font-medium"></span>
+                </div>
+                <div class="flex flex-col gap-1 text-sm bg-slate-50 p-3 rounded mt-2 border border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span id="res-sheet-status">Đã lưu điểm vào hệ thống</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <svg id="icon-drive-status" class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span id="res-drive-status">Đã lưu chi tiết bài làm</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-4 mt-8">
+                <button id="btn-show-answers" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+                    Hiện đáp án
+                </button>
+                <button id="btn-logout" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-3 px-4 rounded-lg transition-colors">
+                    Đăng xuất / Kết thúc
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- JavaScript Logic -->
+    <script>
+        
+        // ---------------------------------------------------------
+        // THIẾT LẬP URL APPS SCRIPT Ở ĐÂY
+        // ---------------------------------------------------------
+        const APPS_SCRIPT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbztRtyKNWFj66wRBxXNd3LqaThEq0Wo5slx5FmOkEejFfh3-JKYPhcJkIubLEc5elcqwQ/exec";
+        const TOTAL_TIME_SEC = 45 * 60; // 45 phút
+        // ---------------------------------------------------------
+        // DỮ LIỆU ĐỀ THI (Chuẩn hóa từ nguồn)
+        // ---------------------------------------------------------
+        const examSource = {
+            part1: [
+                { id: "P1Q01", sourceNum: 1,
+                  text: "Các hạt cấu tạo nên hạt nhân của hầu hết các nguyên tử (trừ đồng vị \\( ^{1}_{1}\\text{H} \\)) là", plainText: "Các hạt cấu tạo nên hạt nhân của hầu hết các nguyên tử (trừ đồng vị 11H) là",
+                  options: [
+                      { key: "A", text: "electron và neutron." },
+                      { key: "B", text: "proton và neutron." },
+                      { key: "C", text: "proton và electron." },
+                      { key: "D", text: "electron, proton và neutron." }
+                  ], correctAnswer: "B" },
+                { id: "P1Q02", sourceNum: 2,
+                  text: "Trong nguyên tử, loại hạt mang điện tích âm chuyển động rất nhanh xung quanh hạt nhân là", plainText: "Trong nguyên tử, loại hạt mang điện tích âm chuyển động rất nhanh xung quanh hạt nhân là",
+                  options: [
+                      { key: "A", text: "hạt proton (p)." },
+                      { key: "B", text: "hạt neutron (n)." },
+                      { key: "C", text: "hạt electron (e)." },
+                      { key: "D", text: "hạt nhân nguyên tử." }
+                  ], correctAnswer: "C" },
+                { id: "P1Q03", sourceNum: 3,
+                  text: "Aluminium (nhôm) là kim loại phổ biến nhất trên vỏ Trái Đất, được sử dụng rộng rãi trong ngành xây dựng và sản xuất đồ gia dụng. Hạt nhân của nguyên tử aluminium có điện tích bằng +13 và số khối bằng 27. Số hạt neutron có trong một nguyên tử aluminium là", plainText: "Aluminium (nhôm) là kim loại phổ biến nhất trên vỏ Trái Đất, được sử dụng rộng rãi trong ngành xây dựng và sản xuất đồ gia dụng. Hạt nhân của nguyên tử aluminium có điện tích bằng +13 và số khối bằng 27. Số hạt neutron có trong một nguyên tử aluminium là",
+                  options: [
+                      { key: "A", text: "13." },
+                      { key: "B", text: "14." },
+                      { key: "C", text: "27." },
+                      { key: "D", text: "40." }
+                  ], correctAnswer: "B" },
+                { id: "P1Q04", sourceNum: 4,
+                  text: "Nguyên tố hóa học là tập hợp các nguyên tử có cùng", plainText: "Nguyên tố hóa học là tập hợp các nguyên tử có cùng",
+                  options: [
+                      { key: "A", text: "số khối." },
+                      { key: "B", text: "số neutron." },
+                      { key: "C", text: "số đơn vị điện tích hạt nhân." },
+                      { key: "D", text: "nguyên tử khối." }
+                  ], correctAnswer: "C" },
+                { id: "P1Q05", sourceNum: 5,
+                  text: "Kí hiệu nguyên tử \\( ^{39}_{19}\\text{K} \\) cho biết số hiệu nguyên tử (Z) và số khối (A) của nguyên tử potassium (kali) lần lượt là", plainText: "Kí hiệu nguyên tử 39 19 K cho biết số hiệu nguyên tử (Z) và số khối (A) của nguyên tử potassium (kali) lần lượt là",
+                  options: [
+                      { key: "A", text: "19 và 20." },
+                      { key: "B", text: "20 và 39." },
+                      { key: "C", text: "19 và 39." },
+                      { key: "D", text: "39 và 19." }
+                  ], correctAnswer: "C" },
+                { id: "P1Q06", sourceNum: 6,
+                  text: "Cho các nguyên tử có kí hiệu như sau: \\( ^{16}_{8}\\text{L}, ^{19}_{9}\\text{D}, ^{18}_{8}\\text{E}, ^{15}_{7}\\text{G} \\). Cặp nguyên tử nào sau đây là đồng vị của cùng một nguyên tố hóa học?", plainText: "Cho các nguyên tử có kí hiệu như sau: 16 8 L, 19 9 D, 18 8 E, 15 7 G. Cặp nguyên tử nào sau đây là đồng vị của cùng một nguyên tố hóa học?",
+                  options: [
+                      { key: "A", text: "\\( ^{16}_{8}\\text{L} \\) và \\( ^{19}_{9}\\text{D} \\)." },
+                      { key: "B", text: "\\( ^{16}_{8}\\text{L} \\) và \\( ^{18}_{8}\\text{E} \\)." },
+                      { key: "C", text: "\\( ^{19}_{9}\\text{D} \\) và \\( ^{15}_{7}\\text{G} \\)." },
+                      { key: "D", text: "\\( ^{18}_{8}\\text{E} \\) và \\( ^{15}_{7}\\text{G} \\)." }
+                  ], correctAnswer: "B" },
+                { id: "P1Q07", sourceNum: 7,
+                  text: "Theo mô hình hiện đại về cấu tạo nguyên tử, các orbital s (AO s) có hình dạng nào sau đây?", plainText: "Theo mô hình hiện đại về cấu tạo nguyên tử, các orbital s (AO s) có hình dạng nào sau đây?",
+                  options: [
+                      { key: "A", text: "Hình số 8 nổi." },
+                      { key: "B", text: "Hình tròn." },
+                      { key: "C", text: "Hình cầu." },
+                      { key: "D", text: "Hình bầu dục." }
+                  ], correctAnswer: "C" },
+                { id: "P1Q08", sourceNum: 8,
+                  text: "Ở trạng thái cơ bản, phân lớp p chứa tối đa bao nhiêu electron?", plainText: "Ở trạng thái cơ bản, phân lớp p chứa tối đa bao nhiêu electron?",
+                  options: [
+                      { key: "A", text: "2 electron." },
+                      { key: "B", text: "6 electron." },
+                      { key: "C", text: "10 electron." },
+                      { key: "D", text: "14 electron." }
+                  ], correctAnswer: "B" },
+                { id: "P1Q09", sourceNum: 9,
+                  text: "Nguyên tử của nguyên tố sodium (natri) có số hiệu nguyên tử Z = 11. Cấu hình electron của nguyên tử sodium ở trạng thái cơ bản và tính chất hóa học cơ bản của nó là", plainText: "Nguyên tử của nguyên tố sodium (natri) có số hiệu nguyên tử Z = 11. Cấu hình electron của nguyên tử sodium ở trạng thái cơ bản và tính chất hóa học cơ bản của nó là",
+                  options: [
+                      { key: "A", text: "\\( 1s^22s^22p^63s^2 \\), là nguyên tố kim loại." },
+                      { key: "B", text: "\\( 1s^22s^22p^63s^1 \\), là nguyên tố kim loại." },
+                      { key: "C", text: "\\( 1s^22s^22p^63s^1 \\), là nguyên tố phi kim." },
+                      { key: "D", text: "\\( 1s^22s^22p^53s^2 \\), là nguyên tố phi kim." }
+                  ], correctAnswer: "B" },
+                { id: "P1Q10", sourceNum: 10,
+                  text: "Trong bảng tuần hoàn các nguyên tố hóa học, các nguyên tố được sắp xếp theo nguyên tắc nào sau đây?", plainText: "Trong bảng tuần hoàn các nguyên tố hóa học, các nguyên tố được sắp xếp theo nguyên tắc nào sau đây?",
+                  options: [
+                      { key: "A", text: "Theo chiều tăng dần của khối lượng nguyên tử." },
+                      { key: "B", text: "Theo chiều tăng dần của điện tích hạt nhân nguyên tử." },
+                      { key: "C", text: "Theo chiều tăng dần của bán kính nguyên tử." },
+                      { key: "D", text: "Các nguyên tố có cùng số lớp electron được xếp thành một cột." }
+                  ], correctAnswer: "B" },
+                { id: "P1Q11", sourceNum: 11,
+                  text: "Bảng tuần hoàn các nguyên tố hóa học hiện nay (đến năm 2016) có bao nhiêu chu kì?", plainText: "Bảng tuần hoàn các nguyên tố hóa học hiện nay (đến năm 2016) có bao nhiêu chu kì?",
+                  options: [
+                      { key: "A", text: "7 chu kì." },
+                      { key: "B", text: "8 chu kì." },
+                      { key: "C", text: "16 chu kì." },
+                      { key: "D", text: "18 chu kì." }
+                  ], correctAnswer: "A" },
+                { id: "P1Q12", sourceNum: 12,
+                  text: "Nguyên tố calcium (Z = 20) đóng vai trò rất quan trọng đối với cơ thể con người, đặc biệt là xương và răng. Vị trí của nguyên tố calcium trong bảng tuần hoàn là", plainText: "Nguyên tố calcium (Z = 20) đóng vai trò rất quan trọng đối với cơ thể con người, đặc biệt là xương và răng. Vị trí của nguyên tố calcium trong bảng tuần hoàn là",
+                  options: [
+                      { key: "A", text: "ô 20, chu kì 4, nhóm IIA." },
+                      { key: "B", text: "ô 20, chu kì 2, nhóm IVA." },
+                      { key: "C", text: "ô 20, chu kì 4, nhóm IIB." },
+                      { key: "D", text: "ô 20, chu kì 3, nhóm IIA." }
+                  ], correctAnswer: "A" },
+                { id: "P1Q13", sourceNum: 13,
+                  text: "Trong một chu kì của bảng tuần hoàn, khi đi từ trái sang phải theo chiều tăng dần của điện tích hạt nhân, xu hướng biến đổi nào sau đây là đúng?", plainText: "Trong một chu kì của bảng tuần hoàn, khi đi từ trái sang phải theo chiều tăng dần của điện tích hạt nhân, xu hướng biến đổi nào sau đây là đúng?",
+                  options: [
+                      { key: "A", text: "Bán kính nguyên tử tăng dần, độ âm điện giảm dần." },
+                      { key: "B", text: "Bán kính nguyên tử giảm dần, độ âm điện tăng dần." },
+                      { key: "C", text: "Tính kim loại tăng dần, tính phi kim giảm dần." },
+                      { key: "D", text: "Bán kính nguyên tử và độ âm điện đều tăng dần." }
+                  ], correctAnswer: "B" },
+                { id: "P1Q14", sourceNum: 14,
+                  text: "Theo thang độ âm điện của L. C. Pauling, nguyên tố có độ âm điện lớn nhất (bằng 3,98) và là phi kim mạnh nhất trong bảng tuần hoàn là", plainText: "Theo thang độ âm điện của L. C. Pauling, nguyên tố có độ âm điện lớn nhất (bằng 3,98) và là phi kim mạnh nhất trong bảng tuần hoàn là",
+                  options: [
+                      { key: "A", text: "Oxygen (O)." },
+                      { key: "B", text: "Chlorine (Cl)." },
+                      { key: "C", text: "Fluorine (F)." },
+                      { key: "D", text: "Nitrogen (N)." }
+                  ], correctAnswer: "C" },
+                { id: "P1Q15", sourceNum: 15,
+                  text: "Almelec là hợp kim của aluminium (\\( _{13}\\text{Al} \\)) với một lượng nhỏ magnesium (\\( _{12}\\text{Mg} \\)) và silicon (\\( _{14}\\text{Si} \\)), được sử dụng làm dây cáp điện cao thế do nhẹ, dẫn điện tốt và bền. Thứ tự sắp xếp các nguyên tố trên theo chiều bán kính nguyên tử tăng dần là", plainText: "Almelec là hợp kim của aluminium (13Al) với một lượng nhỏ magnesium (12Mg) và silicon (14Si), được sử dụng làm dây cáp điện cao thế do nhẹ, dẫn điện tốt và bền. Thứ tự sắp xếp các nguyên tố trên theo chiều bán kính nguyên tử tăng dần là",
+                  options: [
+                      { key: "A", text: "\\( \\text{Mg} < \\text{Al} < \\text{Si} \\)." },
+                      { key: "B", text: "\\( \\text{Si} < \\text{Al} < \\text{Mg} \\)." },
+                      { key: "C", text: "\\( \\text{Al} < \\text{Mg} < \\text{Si} \\)." },
+                      { key: "D", text: "\\( \\text{Si} < \\text{Mg} < \\text{Al} \\)." }
+                  ], correctAnswer: "B" },
+                { id: "P1Q16", sourceNum: 16,
+                  text: "Nguyên tố sulfur (lưu huỳnh) thuộc chu kì 3, nhóm VIA trong bảng tuần hoàn. Công thức oxide ứng với hóa trị cao nhất của sulfur là", plainText: "Nguyên tố sulfur (lưu huỳnh) thuộc chu kì 3, nhóm VIA trong bảng tuần hoàn. Công thức oxide ứng với hóa trị cao nhất của sulfur là",
+                  options: [
+                      { key: "A", text: "\\( \\text{SO}_2 \\)." },
+                      { key: "B", text: "\\( \\text{SO}_3 \\)." },
+                      { key: "C", text: "\\( \\text{S}_2\\text{O}_3 \\)." },
+                      { key: "D", text: "\\( \\text{H}_2\\text{SO}_4 \\)." }
+                  ], correctAnswer: "B" },
+                { id: "P1Q17", sourceNum: 17,
+                  text: "Trong các hydroxide ứng với hóa trị cao nhất của các nguyên tố chu kì 3 dưới đây, chất nào có tính acid yếu nhất?", plainText: "Trong các hydroxide ứng với hóa trị cao nhất của các nguyên tố chu kì 3 dưới đây, chất nào có tính acid yếu nhất?",
+                  options: [
+                      { key: "A", text: "\\( \\text{H}_2\\text{SO}_4 \\)." },
+                      { key: "B", text: "\\( \\text{HClO}_4 \\)." },
+                      { key: "C", text: "\\( \\text{H}_3\\text{PO}_4 \\)." },
+                      { key: "D", text: "\\( \\text{H}_2\\text{SiO}_3 \\)." }
+                  ], correctAnswer: "D" },
+                { id: "P1Q18", sourceNum: 18,
+                  text: "Theo định luật tuần hoàn, đại lượng hay tính chất nào của nguyên tố hóa học cho dưới đây không biến đổi tuần hoàn theo chiều tăng của điện tích hạt nhân nguyên tử?", plainText: "Theo định luật tuần hoàn, đại lượng hay tính chất nào của nguyên tố hóa học cho dưới đây không biến đổi tuần hoàn theo chiều tăng của điện tích hạt nhân nguyên tử?",
+                  options: [
+                      { key: "A", text: "Tính kim loại và tính phi kim của các nguyên tố." },
+                      { key: "B", text: "Tính acid – base của các hydroxide cao nhất." },
+                      { key: "C", text: "Khối lượng nguyên tử." },
+                      { key: "D", text: "Cấu hình electron lớp ngoài cùng của nguyên tử." }
+                  ], correctAnswer: "C" }
+            ],
+            part2: [
+                { id: "P2Q01", sourceNum: 1,
+                  text: "Năm 1911, nhà vật lí E. Rutherford đã thực hiện thí nghiệm bắn phá một lá vàng rất mỏng bằng chùm hạt \\( \\alpha \\) (alpha - hạt nhân nguyên tử helium mang điện tích dương) và dùng màn huỳnh quang để quan sát đường đi của chúng. Xét các phát biểu về thí nghiệm trên và cấu tạo nguyên tử:", plainText: "Năm 1911, nhà vật lí E. Rutherford đã thực hiện thí nghiệm bắn phá một lá vàng rất mỏng bằng chùm hạt alpha và dùng màn huỳnh quang để quan sát đường đi của chúng. Xét các phát biểu về thí nghiệm trên và cấu tạo nguyên tử:",
+                  statements: [
+                      { label: "a", text: "Kết quả thí nghiệm cho thấy hầu hết các hạt \\( \\alpha \\) đều xuyên thẳng qua lá vàng mỏng, chứng tỏ nguyên tử có cấu tạo rỗng.", correctAnswer: "Đúng" },
+                      { label: "b", text: "Một số rất ít hạt \\( \\alpha \\) bị lệch hướng hoặc bật ngược trở lại là do chúng va chạm với các hạt electron ở lớp vỏ nguyên tử.", correctAnswer: "Sai" },
+                      { label: "c", text: "Hạt nhân nguyên tử nằm ở tâm của nguyên tử, mang điện tích dương và có kích thước rất nhỏ so với kích thước nguyên tử.", correctAnswer: "Đúng" },
+                      { label: "d", text: "Khối lượng của nguyên tử được phân bố đồng đều giữa phần hạt nhân và lớp vỏ electron.", correctAnswer: "Sai" }
+                  ] },
+                { id: "P2Q02", sourceNum: 2,
+                  text: "Cho hai nguyên tố hóa học X và Y. Ở trạng thái cơ bản, nguyên tử của nguyên tố X có cấu hình electron là \\( 1s^22s^22p^63s^23p^4 \\) và nguyên tử của nguyên tố Y có cấu hình electron là \\( 1s^22s^22p^63s^23p^64s^1 \\).", plainText: "Cho hai nguyên tố hóa học X và Y. Ở trạng thái cơ bản, nguyên tử của nguyên tố X có cấu hình electron là 1s2 2s2 2p6 3s2 3p4 và nguyên tử của nguyên tố Y có cấu hình electron là 1s2 2s2 2p6 3s2 3p6 4s1.",
+                  statements: [
+                      { label: "a", text: "Số hiệu nguyên tử của nguyên tố X là 16 và của nguyên tố Y là 19.", correctAnswer: "Đúng" },
+                      { label: "b", text: "Nguyên tử X và nguyên tử Y đều có 4 lớp electron ở trạng thái cơ bản.", correctAnswer: "Sai" },
+                      { label: "c", text: "Dựa vào số electron lớp ngoài cùng, X là nguyên tố phi kim và Y là nguyên tố kim loại.", correctAnswer: "Đúng" },
+                      { label: "d", text: "Cả hai nguyên tố X và Y đều thuộc loại nguyên tố s.", correctAnswer: "Sai" }
+                  ] },
+                { id: "P2Q03", sourceNum: 3,
+                  text: "Phosphorus (P) là nguyên tố có trong thành phần của một số loại phân bón hóa học, diêm, pháo hoa và đóng vai trò quan trọng trong các phân tử sinh học như DNA và RNA. Trong bảng tuần hoàn các nguyên tố hóa học, phosphorus có số hiệu nguyên tử Z = 15.", plainText: "Phosphorus (P) là nguyên tố có trong thành phần của một số loại phân bón hóa học, diêm, pháo hoa và đóng vai trò quan trọng trong các phân tử sinh học như DNA và RNA. Trong bảng tuần hoàn các nguyên tố hóa học, phosphorus có số hiệu nguyên tử Z = 15.",
+                  statements: [
+                      { label: "a", text: "Trong bảng tuần hoàn, nguyên tố phosphorus nằm ở ô thứ 15.", correctAnswer: "Đúng" },
+                      { label: "b", text: "Nguyên tử phosphorus có 5 lớp electron và thuộc chu kì 5 của bảng tuần hoàn.", correctAnswer: "Sai" },
+                      { label: "c", text: "Nguyên tố phosphorus thuộc nhóm VA và có 5 electron ở lớp ngoài cùng.", correctAnswer: "Đúng" },
+                      { label: "d", text: "Ở trạng thái cơ bản, tổng số electron trên các phân lớp p của nguyên tử phosphorus là 6.", correctAnswer: "Sai" }
+                  ] },
+                { id: "P2Q04", sourceNum: 4,
+                  text: "Cho các nguyên tố thuộc chu kì 3 của bảng tuần hoàn cùng số hiệu nguyên tử tương ứng: Sodium (\\( _{11}\\text{Na} \\)), Magnesium (\\( _{12}\\text{Mg} \\)), Aluminium (\\( _{13}\\text{Al} \\)) và Chlorine (\\( _{17}\\text{Cl} \\)).", plainText: "Cho các nguyên tố thuộc chu kì 3 của bảng tuần hoàn cùng số hiệu nguyên tử tương ứng: Sodium (11Na), Magnesium (12Mg), Aluminium (13Al) và Chlorine (17Cl).",
+                  statements: [
+                      { label: "a", text: "Oxide ứng với hóa trị cao nhất của aluminium có công thức là \\( \\text{Al}_2\\text{O}_3 \\) và là một oxide lưỡng tính.", correctAnswer: "Đúng" },
+                      { label: "b", text: "Theo chiều từ Na đến Cl, tính base của các oxide và hydroxide tương ứng tăng dần.", correctAnswer: "Sai" },
+                      { label: "c", text: "Trong 4 nguyên tố trên, hydroxide ứng với hóa trị cao nhất của Na là \\( \\text{NaOH} \\) có tính base mạnh nhất.", correctAnswer: "Đúng" },
+                      { label: "d", text: "Hydroxide ứng với hóa trị cao nhất của chlorine có công thức là \\( \\text{HClO} \\) và là một acid rất mạnh.", correctAnswer: "Sai" }
+                  ] }
+            ],
+            part3: [
+                { id: "P3Q01", sourceNum: 1,
+                  text: "Tổng số hạt cơ bản (proton, neutron, electron) trong một nguyên tử của nguyên tố X là 58. Trong nguyên tử X, số hạt mang điện nhiều hơn số hạt không mang điện là 18. Hãy xác định số khối (A) của nguyên tử X.", plainText: "Tổng số hạt cơ bản (proton, neutron, electron) trong một nguyên tử của nguyên tố X là 58. Trong nguyên tử X, số hạt mang điện nhiều hơn số hạt không mang điện là 18. Hãy xác định số khối (A) của nguyên tử X.",
+                  correctAnswer: "39", acceptedAnswers: ["39", "39.0", "39,0"] },
+                { id: "P3Q02", sourceNum: 2,
+                  text: "Bằng phương pháp phổ khối lượng, người ta xác định được trong tự nhiên nguyên tố neon (Ne) có ba đồng vị bền với tỉ lệ phần trăm số nguyên tử như sau: \\( ^{20}_{10}\\text{Ne} \\) (chiếm 90,0%), \\( ^{21}_{10}\\text{Ne} \\) (chiếm 1,0%) và \\( ^{22}_{10}\\text{Ne} \\) (chiếm 9,0%). Hãy tính nguyên tử khối trung bình của neon (làm tròn kết quả đến hàng phần trăm).", plainText: "Bằng phương pháp phổ khối lượng, người ta xác định được trong tự nhiên nguyên tố neon (Ne) có ba đồng vị bền với tỉ lệ phần trăm số nguyên tử như sau: 2010Ne (chiếm 90,0%), 2110Ne (chiếm 1,0%) và 2210Ne (chiếm 9,0%). Hãy tính nguyên tử khối trung bình của neon (làm tròn kết quả đến hàng phần trăm).",
+                  correctAnswer: "20,19", acceptedAnswers: ["20,19", "20.19"] },
+                { id: "P3Q03", sourceNum: 3,
+                  text: "Silicon (Z = 14) là nguyên tố được sử dụng rộng rãi trong nhiều ngành công nghiệp như sản xuất gốm sứ, thủy tinh, luyện thép và chế tạo vật liệu bán dẫn, pin mặt trời. Ở trạng thái cơ bản, nguyên tử silicon có bao nhiêu electron độc thân?", plainText: "Silicon (Z = 14) là nguyên tố được sử dụng rộng rãi trong nhiều ngành công nghiệp như sản xuất gốm sứ, thủy tinh, luyện thép và chế tạo vật liệu bán dẫn, pin mặt trời. Ở trạng thái cơ bản, nguyên tử silicon có bao nhiêu electron độc thân?",
+                  correctAnswer: "2", acceptedAnswers: ["2", "2.0", "2,0"] },
+                { id: "P3Q04", sourceNum: 4,
+                  text: "Nguyên tố X nằm ở chu kì 3, nhóm VIIA trong bảng tuần hoàn các nguyên tố hóa học, đơn chất của X thường được dùng để khử trùng nước sinh hoạt. Hãy cho biết ở trạng thái cơ bản, nguyên tử của nguyên tố X có tổng cộng bao nhiêu electron thuộc phân lớp s?", plainText: "Nguyên tố X nằm ở chu kì 3, nhóm VIIA trong bảng tuần hoàn các nguyên tố hóa học, đơn chất của X thường được dùng để khử trùng nước sinh hoạt. Hãy cho biết ở trạng thái cơ bản, nguyên tử của nguyên tố X có tổng cộng bao nhiêu electron thuộc phân lớp s?",
+                  correctAnswer: "6", acceptedAnswers: ["6", "6.0", "6,0"] },
+                { id: "P3Q05", sourceNum: 5,
+                  text: "Một loại hợp kim nhẹ, bền được sử dụng rộng rãi trong kĩ thuật hàng không chứa hai nguyên tố A và B đứng kế tiếp nhau trong cùng một chu kì của bảng tuần hoàn và có tổng số đơn vị điện tích hạt nhân là 25 (biết \\( Z_A < Z_B \\)). Hãy xác định số hiệu nguyên tử của nguyên tố B.", plainText: "Một loại hợp kim nhẹ, bền được sử dụng rộng rãi trong kĩ thuật hàng không chứa hai nguyên tố A và B đứng kế tiếp nhau trong cùng một chu kì của bảng tuần hoàn và có tổng số đơn vị điện tích hạt nhân là 25 (biết ZA < ZB). Hãy xác định số hiệu nguyên tử của nguyên tố B.",
+                  correctAnswer: "13", acceptedAnswers: ["13", "13.0", "13,0"] },
+                { id: "P3Q06", sourceNum: 6,
+                  text: "Nguyên tố R thuộc nhóm VIA trong bảng tuần hoàn. Trong công thức oxide ứng với hóa trị cao nhất của R, nguyên tố oxygen chiếm 60% về khối lượng. Hãy tính phân tử khối (theo amu) của hydroxide ứng với hóa trị cao nhất của nguyên tố R (biết nguyên tử khối: H = 1; O = 16; S = 32; Se = 79).", plainText: "Nguyên tố R thuộc nhóm VIA trong bảng tuần hoàn. Trong công thức oxide ứng với hóa trị cao nhất của R, nguyên tố oxygen chiếm 60% về khối lượng. Hãy tính phân tử khối (theo amu) của hydroxide ứng với hóa trị cao nhất của nguyên tố R (biết nguyên tử khối: H = 1; O = 16; S = 32; Se = 79).",
+                  correctAnswer: "98", acceptedAnswers: ["98", "98.0", "98,0"] }
+            ]
+        };
+        let state = {
+            attemptId: "",
+            studentName: "",
+            studentClass: "",
+            started: false,
+            isSubmitting: false,
+            isSubmitted: false,
+            answersRevealed: false,
+            startClientMs: 0,
+            serverStartTime: "",
+            shuffled: { part1: [], part2: [], part3: [] },
+            answers: { part1: {}, part2: {}, part3: {} },
+            timerInterval: null
+        };
+        
+        // Fisher-Yates Shuffle an toàn bằng crypto
+        function secureShuffle(array) {
+            let arr = [...array];
+            let currentIndex = arr.length, randomIndex;
+            const randomBytes = new Uint32Array(1);
+            while (currentIndex !== 0) {
+                window.crypto.getRandomValues(randomBytes);
+                randomIndex = randomBytes[0] % currentIndex;
+                currentIndex--;
+                [arr[currentIndex], arr[randomIndex]] = [arr[randomIndex], arr[currentIndex]];
+            }
+            return arr;
+        }
+        // Tạo UUID
+        function generateUUID() {
+            if (crypto.randomUUID) return crypto.randomUUID();
+            return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+                (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+            );
+        }
+        // Cập nhật số lượng câu đã trả lời
+        function updateProgress() {
+            let count = 0;
+            // Part 1
+            count += Object.keys(state.answers.part1).length;
+            // Part 2 - Tính là 1 câu khi chọn đủ 4 ý
+            examSource.part2.forEach(q => {
+                const ansObj = state.answers.part2[q.id] || {};
+                if (Object.keys(ansObj).length === 4) count++;
+            });
+            // Part 3
+            count += Object.keys(state.answers.part3).filter(k => state.answers.part3[k].trim() !== "").length;
+            
+            document.getElementById('progress-count').innerText = count;
+        }
+        
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (state.started) return;
+            
+            const nameInput = document.getElementById('studentName').value.trim();
+            const classInput = document.getElementById('studentClass').value.trim();
+            if (!nameInput || !classInput) return;
+            const btnStart = document.getElementById('btn-start');
+            const spinner = document.getElementById('start-spinner');
+            const errorDiv = document.getElementById('login-error');
+            
+            btnStart.disabled = true;
+            spinner.classList.remove('hidden');
+            errorDiv.classList.add('hidden');
+            state.attemptId = generateUUID();
+            state.studentName = nameInput;
+            state.studentClass = classInput;
+            const payload = {
+                action: "START",
+                hoTen: state.studentName,
+                lop: state.studentClass,
+                attemptId: state.attemptId
+            };
+            try {
+                let data;
+                // Nếu chưa thay URL thật, tự động dùng chế độ chạy thử
+                if (APPS_SCRIPT_WEB_APP_URL === "DAN_URL_WEB_APP_APPS_SCRIPT_VAO_DAY") {
+                    console.warn("Chế độ Mock: Bỏ qua fetch vì chưa có URL Google Apps Script.");
+                    await new Promise(r => setTimeout(r, 600)); // Giả lập mạng
+                    data = { status: "SUCCESS", thoiGianVaoLam: new Date().toLocaleString() };
+                } else {
+                    const response = await fetch(APPS_SCRIPT_WEB_APP_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify(payload),
+                        redirect: "follow"
+                    });
+                    data = await response.json();
+                }
+                
+                if (data.status === "SUCCESS") {
+                    state.serverStartTime = data.thoiGianVaoLam || new Date().toLocaleString();
+                    startExam();
+                } else {
+                    throw new Error(data.message || "Lỗi không xác định từ máy chủ.");
+                }
+            } catch (error) {
+                console.error("START Error:", error);
+                errorDiv.innerText = "Không thể bắt đầu: " + (error.message || "Kiểm tra kết nối mạng hoặc URL Web App.");
+                errorDiv.classList.remove('hidden');
+                btnStart.disabled = false;
+                spinner.classList.add('hidden');
+            }
+        });
+        function startExam() {
+            state.started = true;
+            state.startClientMs = Date.now();
+            
+            // Xáo trộn đề từng phần
+            state.shuffled.part1 = secureShuffle(examSource.part1);
+            state.shuffled.part2 = secureShuffle(examSource.part2);
+            state.shuffled.part3 = secureShuffle(examSource.part3);
+            // Chuyển UI
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('test-screen').classList.remove('hidden');
+            document.getElementById('display-name').innerText = state.studentName;
+            document.getElementById('display-class').innerText = state.studentClass;
+            
+            window.scrollTo(0, 0);
+            renderQuestions();
+            startTimer();
+        }
+        function renderQuestions() {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = "";
+            // PHẦN 1
+            let html = `<div class="glass-panel p-6 rounded-2xl mb-8"><h3 class="text-xl font-bold text-pink-600 mb-4 border-b pb-2 uppercase">Phần 1: Trắc nghiệm nhiều lựa chọn (4,5 điểm)</h3><div class="space-y-8">`;
+            state.shuffled.part1.forEach((q, idx) => {
+                html += `
+                <div class="q-block" id="block-${q.id}">
+                    <div class="font-semibold text-slate-800 mb-3"><span class="text-indigo-600 mr-1">Câu ${idx + 1}.</span> ${q.text}</div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        ${q.options.map(opt => `
+                            <label class="option-label" id="lbl-${q.id}-${opt.key}">
+                                <div class="custom-radio">
+                                    <input type="radio" name="${q.id}" value="${opt.key}" onchange="handleP1Change('${q.id}', '${opt.key}')">
+                                    <span class="radio-mark"></span>
+                                </div>
+                                <span class="font-bold mr-2 text-slate-600">${opt.key}.</span>
+                                <span class="option-text">${opt.text}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                    <div id="ans-${q.id}" class="mt-3 text-sm hidden font-medium"></div>
+                </div>`;
+            });
+            html += `</div></div>`;
+            // PHẦN 2
+            html += `<div class="glass-panel p-6 rounded-2xl mb-8"><h3 class="text-xl font-bold text-pink-600 mb-4 border-b pb-2 uppercase">Phần 2: Trắc nghiệm Đúng/Sai (4,0 điểm)</h3><div class="space-y-8">`;
+            state.shuffled.part2.forEach((q, idx) => {
+                html += `
+                <div class="q-block" id="block-${q.id}">
+                    <div class="font-semibold text-slate-800 mb-3"><span class="text-indigo-600 mr-1">Câu ${idx + 1}.</span> ${q.text}</div>
+                    <div class="space-y-3">
+                        ${q.statements.map(stmt => `
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                                <div class="flex-1 text-slate-700 pr-4"><span class="font-bold mr-1">${stmt.label})</span>${stmt.text}</div>
+                                <div class="flex gap-2 shrink-0">
+                                    <button type="button" id="btn-${q.id}-${stmt.label}-true" class="tf-btn" onclick="handleP2Change('${q.id}', '${stmt.label}', 'Đúng')">Đúng</button>
+                                    <button type="button" id="btn-${q.id}-${stmt.label}-false" class="tf-btn" onclick="handleP2Change('${q.id}', '${stmt.label}', 'Sai')">Sai</button>
+                                </div>
+                            </div>
+                            <div id="ans-${q.id}-${stmt.label}" class="text-sm hidden mt-1 ml-2 font-medium"></div>
+                        `).join('')}
+                    </div>
+                </div>`;
+            });
+            html += `</div></div>`;
+            // PHẦN 3
+            html += `<div class="glass-panel p-6 rounded-2xl"><h3 class="text-xl font-bold text-pink-600 mb-4 border-b pb-2 uppercase">Phần 3: Trả lời ngắn (1,5 điểm)</h3><div class="space-y-8">`;
+            state.shuffled.part3.forEach((q, idx) => {
+                html += `
+                <div class="q-block" id="block-${q.id}">
+                    <div class="font-semibold text-slate-800 mb-3"><span class="text-indigo-600 mr-1">Câu ${idx + 1}.</span> ${q.text}</div>
+                    <div>
+                        <input type="text" id="input-${q.id}" oninput="handleP3Change('${q.id}', this.value)" 
+                            class="w-full sm:w-1/2 px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                            placeholder="Nhập câu trả lời của bạn..." autocomplete="off">
+                    </div>
+                    <div id="ans-${q.id}" class="mt-3 text-sm hidden font-medium"></div>
+                </div>`;
+            });
+            html += `</div></div>`;
+            container.innerHTML = html;
+            // Kích hoạt MathJax render cho các công thức sinh ra động
+            if (window.MathJax) {
+                MathJax.typesetPromise().catch((err) => console.log('MathJax error: ', err));
+            }
+        }
+        
+        function handleP1Change(qId, val) {
+            if (state.isSubmitted) return;
+            state.answers.part1[qId] = val;
+            updateProgress();
+        }
+        function handleP2Change(qId, label, val) {
+            if (state.isSubmitted) return;
+            if (!state.answers.part2[qId]) state.answers.part2[qId] = {};
+            state.answers.part2[qId][label] = val;
+            
+            // Cập nhật UI nút T/F
+            const btnTrue = document.getElementById(`btn-${qId}-${label}-true`);
+            const btnFalse = document.getElementById(`btn-${qId}-${label}-false`);
+            
+            btnTrue.classList.remove('selected-true');
+            btnFalse.classList.remove('selected-false');
+            
+            if (val === 'Đúng') btnTrue.classList.add('selected-true');
+            if (val === 'Sai') btnFalse.classList.add('selected-false');
+            
+            updateProgress();
+        }
+        function handleP3Change(qId, val) {
+            if (state.isSubmitted) return;
+            state.answers.part3[qId] = val;
+            updateProgress();
+        }
+        
+        function startTimer() {
+            const display = document.getElementById('timer-display');
+            
+            state.timerInterval = setInterval(() => {
+                if (state.isSubmitted) {
+                    clearInterval(state.timerInterval);
+                    return;
+                }
+                
+                const now = Date.now();
+                const elapsedSec = Math.floor((now - state.startClientMs) / 1000);
+                const remainingSec = TOTAL_TIME_SEC - elapsedSec;
+                
+                if (remainingSec <= 0) {
+                    clearInterval(state.timerInterval);
+                    display.innerText = "00:00";
+                    if (!state.isSubmitting && !state.isSubmitted) {
+                        alert("Đã hết thời gian làm bài. Hệ thống sẽ tự động nộp bài.");
+                        processSubmission();
+                    }
+                    return;
+                }
+                const m = Math.floor(remainingSec / 60).toString().padStart(2, '0');
+                const s = (remainingSec % 60).toString().padStart(2, '0');
+                display.innerText = `${m}:${s}`;
+                if (remainingSec <= 60) {
+                    display.classList.add('time-critical');
+                    display.classList.remove('time-warning');
+                } else if (remainingSec <= 300) {
+                    display.classList.add('time-warning');
+                }
+            }, 1000);
+        }
+        document.getElementById('btn-submit').addEventListener('click', () => {
+            if (state.isSubmitted || state.isSubmitting) return;
+            if (confirm("Em có chắc chắn muốn nộp bài? Hãy kiểm tra lại các câu chưa làm.")) {
+                processSubmission();
+            }
+        });
+        
+        // So sánh cho câu Trả lời ngắn, chấp nhận format số
+        function isShortAnswerCorrect(student, keyObj) {
+            if (!student) return false;
+            let s = student.trim().toLowerCase();
+            let keys = keyObj.acceptedAnswers.map(k => k.trim().toLowerCase());
+            if (keys.includes(s)) return true;
+            // Xử lý dấu phẩy, khoảng trắng
+            let normS = s.replace(/,/g, '.').replace(/\s+/g, '');
+            for (let k of keys) {
+                let normK = k.replace(/,/g, '.').replace(/\s+/g, '');
+                if (normS === normK) return true;
+                
+                // So sánh dạng số nếu parse được
+                let numS = parseFloat(normS);
+                let numK = parseFloat(normK);
+                if (!isNaN(numS) && !isNaN(numK) && Math.abs(numS - numK) < 0.0001) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        async function processSubmission() {
+            state.isSubmitting = true;
+            clearInterval(state.timerInterval);
+            
+            // Khóa giao diện
+            document.querySelectorAll('input, button.tf-btn').forEach(el => {
+                el.disabled = true;
+                if (el.tagName === 'LABEL') el.classList.add('locked');
+                if (el.tagName === 'BUTTON') el.classList.add('locked');
+            });
+            document.querySelectorAll('.option-label').forEach(el => el.classList.add('locked'));
+            
+            const btnSubmit = document.getElementById('btn-submit');
+            const spinnerSubmit = document.getElementById('submit-spinner');
+            btnSubmit.classList.add('cursor-not-allowed', 'opacity-80');
+            spinnerSubmit.classList.remove('hidden');
+            const thoiGianLamGiay = Math.floor((Date.now() - state.startClientMs) / 1000);
+            // Chấm điểm và tạo chiTietBaiLam
+            let scoreP1 = 0, scoreP2 = 0, scoreP3 = 0;
+            let soDung = 0, soSai = 0, soChuaLam = 0;
+            const chiTietBaiLam = [];
+            // Chấm P1 (18 câu, mỗi câu 0.25 điểm = 4.5 điểm)
+            state.shuffled.part1.forEach((q, idx) => {
+                const sAns = state.answers.part1[q.id] || "";
+                const isCorrect = sAns === q.correctAnswer;
+                const isComplete = sAns !== "";
+                const score = isCorrect ? 0.25 : 0;
+                
+                scoreP1 += score;
+                if (!isComplete) soChuaLam++;
+                else if (isCorrect) soDung++;
+                else soSai++;
+                chiTietBaiLam.push({
+                    part: 1, order: idx + 1, questionId: q.id,
+                    questionText: q.plainText, sourceType: "multiple_choice", mediaSrc: "",
+                    studentAnswer: sAns, correctAnswer: q.correctAnswer,
+                    isCorrect: isCorrect, isComplete: isComplete,
+                    score: score, maxScore: 0.25, statements: []
+                });
+            });
+            // Chấm P2 (4 câu Đúng/Sai, thang điểm: 1 ý=0.1, 2 ý=0.25, 3 ý=0.5, 4 ý=1.0)
+            const p2ScoreMap = { 0: 0, 1: 0.10, 2: 0.25, 3: 0.50, 4: 1.00 };
+            state.shuffled.part2.forEach((q, idx) => {
+                const sAnsObj = state.answers.part2[q.id] || {};
+                let correctCount = 0;
+                let isComplete = true;
+                const stmts = [];
+                const sAnsTextArr = [];
+                const cAnsTextArr = [];
+                q.statements.forEach(stmt => {
+                    const s = sAnsObj[stmt.label] || "";
+                    if (!s) isComplete = false;
+                    const isStmtCorrect = s === stmt.correctAnswer;
+                    if (isStmtCorrect && s !== "") correctCount++;
+                    
+                    sAnsTextArr.push(`${stmt.label}: ${s || "_"}`);
+                    cAnsTextArr.push(`${stmt.label}: ${stmt.correctAnswer}`);
+                    stmts.push({
+                        label: stmt.label, text: stmt.text,
+                        studentAnswer: s, correctAnswer: stmt.correctAnswer, isCorrect: isStmtCorrect
+                    });
+                });
+                const score = p2ScoreMap[correctCount] || 0;
+                scoreP2 += score;
+                const isAllCorrect = correctCount === 4;
+                if (!isComplete) soChuaLam++;
+                else if (isAllCorrect) soDung++;
+                else soSai++; 
+                chiTietBaiLam.push({
+                    part: 2, order: idx + 1, questionId: q.id,
+                    questionText: q.plainText, sourceType: "true_false", mediaSrc: "",
+                    studentAnswer: sAnsTextArr.join("; "), correctAnswer: cAnsTextArr.join("; "),
+                    isCorrect: isAllCorrect, isComplete: isComplete,
+                    score: score, maxScore: 1.00, statements: stmts
+                });
+            });
+            // Chấm P3 (6 câu trả lời ngắn, tổng 1.5 điểm -> mỗi câu 0.25 điểm)
+            state.shuffled.part3.forEach((q, idx) => {
+                const sAns = (state.answers.part3[q.id] || "").trim();
+                const isCorrect = isShortAnswerCorrect(sAns, q);
+                const isComplete = sAns !== "";
+                const score = isCorrect ? 0.25 : 0;
+                
+                scoreP3 += score;
+                if (!isComplete) soChuaLam++;
+                else if (isCorrect) soDung++;
+                else soSai++;
+                chiTietBaiLam.push({
+                    part: 3, order: idx + 1, questionId: q.id,
+                    questionText: q.plainText, sourceType: "short_answer", mediaSrc: "",
+                    studentAnswer: sAns, correctAnswer: q.correctAnswer,
+                    isCorrect: isCorrect, isComplete: isComplete,
+                    score: score, maxScore: 0.25, statements: []
+                });
+            });
+            const tongDiem = Math.round((scoreP1 + scoreP2 + scoreP3) * 100) / 100;
+            const payload = {
+                action: "SUBMIT",
+                hoTen: state.studentName,
+                lop: state.studentClass,
+                attemptId: state.attemptId,
+                mon: "Hóa học 10",
+                diem: tongDiem,
+                soDung: soDung,
+                soSai: soSai,
+                soChuaLam: soChuaLam,
+                tongSoCau: 28,
+                diemPhan1: scoreP1,
+                diemPhan2: scoreP2,
+                diemPhan3: scoreP3,
+                thoiGianVaoLam: state.serverStartTime,
+                thoiGianLamGiay: thoiGianLamGiay,
+                chiTietBaiLam: chiTietBaiLam
+            };
+            try {
+                let data;
+                if (APPS_SCRIPT_WEB_APP_URL === "DAN_URL_WEB_APP_APPS_SCRIPT_VAO_DAY") {
+                    await new Promise(r => setTimeout(r, 1000));
+                    data = { status: "SUCCESS", driveSaved: true };
+                } else {
+                    const response = await fetch(APPS_SCRIPT_WEB_APP_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify(payload),
+                        redirect: "follow"
+                    });
+                    data = await response.json();
+                }
+                state.isSubmitted = true;
+                showResult(payload, data);
+            } catch (error) {
+                console.error("SUBMIT Error:", error);
+                alert("Lỗi khi lưu điểm lên hệ thống. Vui lòng thử bấm nộp lại hoặc báo giáo viên.\nLỗi: " + error.message);
+                state.isSubmitting = false;
+                btnSubmit.classList.remove('cursor-not-allowed', 'opacity-80');
+                spinnerSubmit.classList.add('hidden');
+            }
+        }
+        function showResult(payload, responseData) {
+            document.getElementById('res-name').innerText = state.studentName;
+            document.getElementById('res-class').innerText = state.studentClass;
+            document.getElementById('res-total-score').innerText = payload.diem.toFixed(2);
+            document.getElementById('res-p1-score').innerText = payload.diemPhan1.toFixed(2);
+            document.getElementById('res-p2-score').innerText = payload.diemPhan2.toFixed(2);
+            document.getElementById('res-p3-score').innerText = payload.diemPhan3.toFixed(2);
+            
+            const mins = Math.floor(payload.thoiGianLamGiay / 60);
+            const secs = payload.thoiGianLamGiay % 60;
+            document.getElementById('res-duration').innerText = `${mins} phút ${secs} giây`;
+            const driveStatusEl = document.getElementById('res-drive-status');
+            const driveIconEl = document.getElementById('icon-drive-status');
+            if (responseData.status !== "SUCCESS") {
+                document.getElementById('res-sheet-status').innerText = "Có lỗi xảy ra khi lưu điểm!";
+                document.getElementById('res-sheet-status').classList.replace('text-green-500', 'text-red-500');
+            }
+            if (responseData.driveSaved === false) {
+                driveStatusEl.innerText = "Điểm đã lưu nhưng hồ sơ Drive bị lỗi. Hãy báo GV.";
+                driveStatusEl.classList.add('text-red-600');
+                driveIconEl.classList.replace('text-green-500', 'text-red-500');
+                driveIconEl.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
+            }
+            document.getElementById('result-modal').classList.remove('hidden');
+        }
+        
+        document.getElementById('btn-show-answers').addEventListener('click', () => {
+            if (!state.isSubmitted) return;
+            state.answersRevealed = true;
+            document.getElementById('result-modal').classList.add('hidden');
+            
+            // Xóa nút submit
+            document.getElementById('btn-submit').parentElement.classList.add('hidden');
+            // Render đáp án P1
+            state.shuffled.part1.forEach(q => {
+                const sAns = state.answers.part1[q.id];
+                const cAns = q.correctAnswer;
+                const ansDiv = document.getElementById(`ans-${q.id}`);
+                
+                if (sAns) document.getElementById(`lbl-${q.id}-${sAns}`).classList.add(sAns === cAns ? 'ring-2' : 'ring-2', sAns === cAns ? 'ring-green-500' : 'ring-red-500', 'bg-slate-50');
+                document.getElementById(`lbl-${q.id}-${cAns}`).classList.add('bg-green-100', 'border-green-400');
+                
+                ansDiv.innerHTML = sAns === cAns ? `<span class="text-green-600">✓ Đúng</span>` : `<span class="text-red-600">✗ Sai. Đáp án đúng: ${cAns}</span>`;
+                ansDiv.classList.remove('hidden');
+            });
+            // Render đáp án P2
+            state.shuffled.part2.forEach(q => {
+                const sAnsObj = state.answers.part2[q.id] || {};
+                let pts = 0, count = 0;
+                
+                q.statements.forEach(stmt => {
+                    const s = sAnsObj[stmt.label];
+                    const c = stmt.correctAnswer;
+                    const ansDiv = document.getElementById(`ans-${q.id}-${stmt.label}`);
+                    
+                    if (s === c) count++;
+                    ansDiv.innerHTML = s === c ? `<span class="text-green-600">✓ Đúng</span>` : `<span class="text-red-600">✗ Sai. Đáp án là: ${c}</span>`;
+                    ansDiv.classList.remove('hidden');
+                });
+                
+                const p2ScoreMap = { 0: 0, 1: 0.10, 2: 0.25, 3: 0.50, 4: 1.00 };
+                pts = p2ScoreMap[count] || 0;
+                
+                const header = document.getElementById(`block-${q.id}`).querySelector('div:first-child');
+                header.innerHTML += ` <span class="text-pink-600 ml-2">[Đạt ${pts} điểm]</span>`;
+            });
+            // Render đáp án P3
+            state.shuffled.part3.forEach(q => {
+                const sAns = (state.answers.part3[q.id] || "").trim();
+                const isCorrect = isShortAnswerCorrect(sAns, q);
+                const ansDiv = document.getElementById(`ans-${q.id}`);
+                const input = document.getElementById(`input-${q.id}`);
+                
+                input.classList.add(isCorrect ? 'bg-green-50' : 'bg-red-50', isCorrect ? 'border-green-400' : 'border-red-400', 'text-slate-900');
+                
+                ansDiv.innerHTML = isCorrect 
+                    ? `<span class="text-green-600">✓ Đúng</span>` 
+                    : `<span class="text-red-600">✗ Sai. Đáp án đúng: <strong class="text-indigo-700">${q.correctAnswer}</strong></span>`;
+                ansDiv.classList.remove('hidden');
+            });
+            window.scrollTo(0, 0);
+        });
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            window.location.reload();
+        });
+    </script>
+</body>
+</html>
